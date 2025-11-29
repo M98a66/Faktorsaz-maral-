@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>فاکتور ساز مارال</title>
+    <link rel="manifest" href="manifest.json">
+    <style>
+        :root {
+            --primary: #2575fc; --secondary: #6a11cb; 
+            --glass-bg: rgba(255, 255, 255, 0.95); 
+            --text-color: #333; --danger: #ff4757; 
+            --success: #2ed573; --radius: 18px;
+        }
+
+        * { box-sizing: border-box; }
+        body { 
+            font-family: Tahoma, sans-serif; 
+            margin: 0; padding: 0; 
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); 
+            color: var(--text-color); 
+            min-height: 100vh; 
+            padding-bottom: 100px;
+        }
+
+        .container { max-width: 800px; margin: 0 auto; padding: 15px; }
+        .glass-panel { 
+            background: var(--glass-bg); 
+            border-radius: var(--radius); 
+            padding: 20px; 
+            margin-bottom: 20px; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1); 
+        }
+
+        h1, h2, h3 { margin: 0 0 15px 0; text-align: center; color: #444; }
+        label { display: block; margin-bottom: 6px; font-weight: bold; font-size: 0.85em; color: #555; }
+        input, select, textarea { 
+            width: 100%; 
+            padding: 12px; 
+            margin-bottom: 12px; 
+            border: 1px solid #ccc; 
+            border-radius: 12px; 
+            font-family: Tahoma; 
+        }
+
+        .row { display: flex; gap: 10px; flex-wrap: wrap; } 
+        .col { flex: 1; min-width: 120px; }
+        
+        button { 
+            width: 100%; 
+            padding: 12px; 
+            border: none; 
+            border-radius: 12px; 
+            background: var(--primary); 
+            color: white; 
+            font-weight: bold; 
+            cursor: pointer;
+            font-family: Tahoma;
+        }
+
+        .btn-success { background: var(--success); }
+        .btn-danger { background: var(--danger); }
+
+        .bottom-nav {
+            position: fixed; 
+            bottom: 20px; 
+            left: 50%; 
+            transform: translateX(-50%);
+            width: 92%; 
+            max-width: 450px;
+            background: rgba(255, 255, 255, 0.92);
+            border-radius: 25px;
+            display: flex; 
+            justify-content: space-around; 
+            padding: 12px 5px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .nav-item { 
+            text-align: center; 
+            color: #999; 
+            font-size: 0.7em; 
+            cursor: pointer; 
+            flex: 1; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+        }
+
+        .nav-item.active { color: var(--primary); font-weight: bold; }
+        .nav-icon { font-size: 24px; display: block; margin-bottom: 2px; }
+
+        .invoice-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9em; }
+        .invoice-table th { background: rgba(37, 117, 252, 0.1); padding: 10px; text-align: right; }
+        .invoice-table td { border-bottom: 1px solid rgba(0,0,0,0.05); padding: 10px; }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        @media (display-mode: standalone) {
+            body { padding-top: 40px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="glass-panel" style="text-align: center; padding: 10px;">
+            <h2>💎 فاکتور ساز مارال</h2>
+            <p>نسخه PWA - قابل نصب روی موبایل</p>
+        </div>
+
+        <div id="tab-create" class="tab-content active">
+            <div class="glass-panel">
+                <h3>صدور فاکتور جدید</h3>
+                
+                <div class="row">
+                    <div class="col">
+                        <label>شماره فاکتور</label>
+                        <input type="text" id="inv-no" value="۱۰۰۱">
+                    </div>
+                    <div class="col">
+                        <label>تاریخ</label>
+                        <input type="text" id="inv-date" readonly>
+                    </div>
+                </div>
+
+                <label>نام خریدار</label>
+                <input type="text" id="customer-name" placeholder="نام مشتری">
+
+                <div style="background: rgba(255,255,255,0.5); padding: 15px; border-radius: 12px; margin: 15px 0;">
+                    <label>افزودن کالا</label>
+                    <div class="row">
+                        <div class="col">
+                            <input type="text" id="product-name" placeholder="نام کالا">
+                        </div>
+                        <div class="col">
+                            <input type="text" id="product-price" placeholder="قیمت">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <input type="text" id="product-qty" value="۱" placeholder="تعداد">
+                        </div>
+                        <div class="col">
+                            <select id="product-unit">
+                                <option>عدد</option>
+                                <option>متر</option>
+                                <option>کیلوگرم</option>
+                                <option>سرویس</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="btn-success" onclick="addItem()">➕ افزودن کالا</button>
+                </div>
+
+                <table class="invoice-table">
+                    <thead>
+                        <tr>
+                            <th>شرح کالا</th>
+                            <th>تعداد</th>
+                            <th>قیمت</th>
+                            <th>حذف</th>
+                        </tr>
+                    </thead>
+                    <tbody id="items-list"></tbody>
+                </table>
+
+                <button onclick="saveInvoice()">💾 ثبت فاکتور</button>
+            </div>
+        </div>
+
+        <div id="tab-invoices" class="tab-content">
+            <div class="glass-panel">
+                <h3>آرشیو فاکتورها</h3>
+                <div id="invoices-container"></div>
+            </div>
+        </div>
+
+        <div id="tab-customers" class="tab-content">
+            <div class="glass-panel">
+                <h3>مدیریت مشتریان</h3>
+                <button onclick="addCustomer()">➕ افزودن مشتری</button>
+                <div id="customers-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <div class="nav-item active" onclick="showTab('create')">
+            <span class="nav-icon">✍️</span>
+            <span>صدور</span>
+        </div>
+        <div class="nav-item" onclick="showTab('invoices')">
+            <span class="nav-icon">📂</span>
+            <span>آرشیو</span>
+        </div>
+        <div class="nav-item" onclick="showTab('customers')">
+            <span class="nav-icon">👥</span>
+            <span>مشتریان</span>
+        </div>
+        <div class="nav-item" onclick="installApp()">
+            <span class="nav-icon">📱</span>
+            <span>نصب برنامه</span>
+        </div>
+    </div>
+
+    <script>
+        // تنظیم تاریخ امروز
+        document.getElementById('inv-date').value = new Date().toLocaleDateString('fa-IR');
+        
+        let items = [];
+        let invoices = JSON.parse(localStorage.getItem('invoices')) || [];
+        let customers = JSON.parse(localStorage.getItem('customers')) || [];
+
+        function showTab(tabName) {
+            // مخفی کردن همه تب‌ها
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // آپدیت نویگیشن
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+            
+            // نمایش تب انتخاب شده
+            document.getElementById('tab-' + tabName).classList.add('active');
+            
+            if (tabName === 'invoices') {
+                renderInvoices();
+            } else if (tabName === 'customers') {
+                renderCustomers();
+            }
+        }
+
+        function addItem() {
+            const name = document.getElementById('product-name').value;
+            const price = document.getElementById('product-price').value;
+            const qty = document.getElementById('product-qty').value;
+            const unit = document.getElementById('product-unit').value;
+            
+            if (!name || !price) {
+                alert('لطفاً نام و قیمت کالا را وارد کنید');
+                return;
+            }
+            
+            const total = (parseInt(price.replace(/,/g, '')) * parseInt(qty)).toLocaleString();
+            
+            items.push({
+                name: name,
+                price: parseInt(price.replace(/,/g, '')).toLocaleString(),
+                qty: qty,
+                unit: unit,
+                total: total
+            });
+            
+            renderItems();
+            
+            // پاک کردن فیلدها
+            document.getElementById('product-name').value = '';
+            document.getElementById('product-price').value = '';
+            document.getElementById('product-qty').value = '۱';
+        }
+
+        function renderItems() {
+            const container = document.getElementById('items-list');
+            container.innerHTML = '';
+            
+            items.forEach((item, index) => {
+                container.innerHTML += `
+                    <tr>
+                        <td>${item.name}</td>
+                        <td>${item.qty} ${item.unit}</td>
+                        <td>${item.price}</td>
+                        <td><button class="btn-danger" onclick="removeItem(${index})">🗑️</button></td>
+                    </tr>
+                `;
+            });
+        }
+
+        function removeItem(index) {
+            items.splice(index, 1);
+            renderItems();
+        }
+
+        function saveInvoice() {
+            if (items.length === 0) {
+                alert('لطفاً حداقل یک کالا اضافه کنید');
+                return;
+            }
+            
+            const customer = document.getElementById('customer-name').value || 'مشتری ناشناس';
+            const total = items.reduce((sum, item) => sum + parseInt(item.total.replace(/,/g, '')), 0);
+            
+            const invoice = {
+                id: Date.now(),
+                number: document.getElementById('inv-no').value,
+                date: document.getElementById('inv-date').value,
+                customer: customer,
+                items: [...items],
+                total: total.toLocaleString()
+            };
+            
+            invoices.unshift(invoice);
+            localStorage.setItem('invoices', JSON.stringify(invoices));
+            
+            alert(`فاکتور شماره ${invoice.number} با موفقیت ثبت شد!\nمبلغ کل: ${invoice.total} تومان`);
+            
+            // ریست فرم
+            items = [];
+            document.getElementById('customer-name').value = '';
+            document.getElementById('inv-no').value = (parseInt(invoice.number) + 1).toString();
+            renderItems();
+            
+            // نمایش تب آرشیو
+            showTab('invoices');
+        }
+
+        function renderInvoices() {
+            const container = document.getElementById('invoices-container');
+            container.innerHTML = '';
+            
+            if (invoices.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #666;">هنوز فاکتوری ثبت نشده است</p>';
+                return;
+            }
+            
+            invoices.forEach(invoice => {
+                container.innerHTML += `
+                    <div class="glass-panel" style="margin-bottom: 15px;">
+                        <div style="display: flex; justify-content: space-between;">
+                            <strong>فاکتور #${invoice.number}</strong>
+                            <span>${invoice.date}</span>
+                        </div>
+                        <div>مشتری: ${invoice.customer}</div>
+                        <div>تعداد کالاها: ${invoice.items.length}</div>
+                        <div style="font-weight: bold; color: var(--primary); margin-top: 10px;">
+                            مبلغ کل: ${invoice.total} تومان
+                        </div>
+                        <button onclick="printInvoice(${invoice.id})" style="margin-top: 10px;">🖨️ چاپ فاکتور</button>
+                    </div>
+                `;
+            });
+        }
+
+        function printInvoice(invoiceId) {
+            const invoice = invoices.find(inv => inv.id === invoiceId);
+            if (!invoice) return;
+            
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html dir="rtl">
+                <head>
+                    <title>فاکتور ${invoice.number}</title>
+                    <style>
+                        body { font-family: Tahoma; padding: 20px; }
+                        .header { text-align: center; margin-bottom: 30px; }
+                        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                        th, td { border: 1px solid #000; padding: 10px; text-align: center; }
+                        .total { font-weight: bold; font-size: 18px; margin-top: 20px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>فاکتور فروش</h1>
+                        <h2>فاکتور ساز مارال</h2>
+                    </div>
+                    
+                    <div>
+                        <p><strong>شماره فاکتور:</strong> ${invoice.number}</p>
+                        <p><strong>تاریخ:</strong> ${invoice.date}</p>
+                        <p><strong>مشتری:</strong> ${invoice.customer}</p>
+                    </div>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ردیف</th>
+                                <th>شرح کالا</th>
+                                <th>تعداد</th>
+                                <th>قیمت واحد</th>
+                                <th>مبلغ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${invoice.items.map((item, index) => `
+                                <tr>
+                                    <td>${index + 1}</td>
+                                    <td>${item.name}</td>
+                                    <td>${item.qty} ${item.unit}</td>
+                                    <td>${item.price}</td>
+                                    <td>${item.total}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+
+                    <div class="total">
+                        <p>مبلغ قابل پرداخت: ${invoice.total} تومان</p>
+                    </div>
+                </body>
+                </html>
+            `);
+            
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        function installApp() {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(() => {
+                        alert('برنامه آماده نصب است! در مرورگر خود گزینه "Add to Home Screen" را انتخاب کنید.');
+                    })
+                    .catch(error => {
+                        alert('امکان نصب برنامه فراهم است. در منوی مرورگر گزینه "Add to Home Screen" را بزنید.');
+                    });
+            } else {
+                alert('برای نصب برنامه در مرورگر خود گزینه "Add to Home Screen" را انتخاب کنید.');
+            }
+        }
+
+        // بارگذاری اولیه
+        renderInvoices();
+    </script>
+</body>
+</html>
